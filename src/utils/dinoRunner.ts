@@ -36,12 +36,12 @@ const DEFAULT_CONFIG: RunnerConfig = {
   CLOUD_FREQUENCY: 0.35,
   GAMEOVER_CLEAR_TIME: 750,
   GAP_COEFFICIENT: 0.7,
-  GRAVITY: 0.55, // Lower gravity for more airtime to clear obstacles
-  INITIAL_JUMP_VELOCITY: 15, // Higher jump to easily clear cacti
+  GRAVITY: 0.58, // Smooth gravity for easier gameplay
+  INITIAL_JUMP_VELOCITY: 15, // Higher jump for easy obstacle clearing
   MAX_CLOUDS: 6,
   MAX_OBSTACLE_LENGTH: 3,
-  MAX_SPEED: 7, // Reduced max speed for better playability
-  MIN_JUMP_HEIGHT: 35,
+  MAX_SPEED: 6, // Slower max speed for smoother gameplay
+  MIN_JUMP_HEIGHT: 32, // Higher minimum jump
   MOBILE_SPEED_COEFFICIENT: IS_ANDROID ? 0.7 : (IS_IOS ? 0.7 : 0.8), // Slightly faster for better gameplay
   SPEED: 2.5, // Reduced starting speed for gentler start
   SPEED_DROP_COEFFICIENT: 3,
@@ -268,18 +268,18 @@ export class DinoRunner {
     {
       type: 'CACTUS_SMALL',
       width: 12,   // Increased for better visibility
-      height: 32,  // Increased height
+      height: 30,  // Increased height for better visibility
       yPos: 0, // Will be calculated
       multipleSpeed: 3,
-  minGap: 170,
+  minGap: 180,  // Increased gap for easier gameplay
     },
     {
       type: 'CACTUS_LARGE',
       width: 16,   // Increased for better visibility
-      height: 42,  // Increased height
+      height: 38,  // Increased height for better visibility
       yPos: 0, // Will be calculated
       multipleSpeed: 6,
-  minGap: 170,
+  minGap: 180,  // Increased gap for easier gameplay
     }
   ];
 
@@ -316,8 +316,8 @@ export class DinoRunner {
     // Move play area a little down (lower from top) for all screens
     const topGap = headerHeight + 140;
     const availableHeight = viewportHeight - topGap - bottomGap;
-    // Reduced minimum heights for shorter play area
-    const minHeight = screenHeight > 700 ? 100 : screenHeight > 600 ? 85 : 70;
+    // Larger minimum heights for better gameplay area
+    const minHeight = screenHeight > 700 ? 180 : screenHeight > 600 ? 160 : 140;
     const finalHeight = Math.max(minHeight, availableHeight);
 
     this.dimensions = {
@@ -1097,11 +1097,20 @@ export class DinoRunner {
     const type = this.obstacleTypes[typeIndex];
     const size = Math.min(Math.floor(Math.random() * 3) + 1, 3);
     
+    // Calculate speed progress (0 to 1) from initial speed to max speed
+    const speedProgress = Math.min((this.currentSpeed - this.config.SPEED) / (this.config.MAX_SPEED - this.config.SPEED), 1);
+    
+    // Scale obstacle height based on speed
+    // Start at 85% of base height, grow to 100% at max speed
+    const minHeightScale = 0.85;
+    const heightScale = minHeightScale + (speedProgress * (1 - minHeightScale));
+    const scaledHeight = Math.round(type.height * heightScale);
+    
     const obstacle: Obstacle = {
       xPos: this.dimensions.WIDTH,
-      yPos: type.yPos,
+      yPos: this.dimensions.HEIGHT - 12 - scaledHeight, // Recalculate yPos with scaled height
       width: type.width * size,
-      height: type.height,
+      height: scaledHeight, // Use scaled height
       size,
       typeConfig: type,
       remove: false,
