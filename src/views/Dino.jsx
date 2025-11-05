@@ -1,8 +1,9 @@
 import BottomNav from "../components/boost/BottomNav";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CoinBurst from "../components/dino/CoinBurst";
 import GameInfoModal from "../components/global/GameInfoModal";
 import StatusModal from "../components/global/StatusModal";
+import DinoGame from "../components/dino/DinoGame";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { FiRefreshCw } from "react-icons/fi";
@@ -14,29 +15,44 @@ import NextGoalIcon from "../assets/img/stats/NextGoal.png";
 import CoinIcon from "../assets/img/stats/coin.png";
 
 // TODO: Update this URL to match your current ngrok URL
-const API_BASE = "https://manage.iamdino.org";
+const API_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
 // For local testing without ngrok, use:
-// const API_BASE = "https://manage.iamdino.org";
+// const API_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
 // NOTE: Switch back to ngrok URL when deploying to Telegram
 
 function Dino() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [totalReward, setTotalReward] = useState(0);
-  const [playsRemaining, setPlaysRemaining] = useState(7);
+  const [playsRemaining, setPlaysRemaining] = useState(null); // Start as null - not loaded yet
   const [highestMilestone, setHighestMilestone] = useState(0);
   const [showCoins, setShowCoins] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [statusTitle, setStatusTitle] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [nextResetTime, setNextResetTime] = useState(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const dinoGameRef = useRef(null);
 
   useEffect(() => {
     // Get Telegram user data
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     console.log('🔧 [DINO] Telegram user:', tgUser);
+    
     if (tgUser) {
       setUser(tgUser);
       fetchUserData(tgUser.id.toString());
+    } else {
+      // Development mode fallback - use a test user
+      console.warn('⚠️ [DINO] No Telegram user found, using test user for development');
+      const testUser = {
+        id: 123456789,
+        first_name: 'Test User',
+        last_name: 'Dev',
+        username: 'testuser'
+      };
+      setUser(testUser);
+      fetchUserData(testUser.id.toString());
     }
   }, []);
 
@@ -58,18 +74,14 @@ function Dino() {
         setTotalReward(res.data.totalReward || 0);
         setHighestMilestone(res.data.highestMilestone || 0);
         setPlaysRemaining(res.data.playsRemaining !== undefined ? res.data.playsRemaining : 7);
+        setNextResetTime(res.data.nextResetTime || null);
+        setIsDataLoaded(true); // Mark data as loaded
         console.log('✅ [DINO] User data loaded:', {
           totalReward: res.data.totalReward,
           playsRemaining: res.data.playsRemaining,
-          highestMilestone: res.data.highestMilestone
+          highestMilestone: res.data.highestMilestone,
+          nextResetTime: res.data.nextResetTime
         });
-        
-        // Force reload iframe to update with new plays
-        const iframe = document.querySelector('iframe');
-        if (iframe) {
-          iframe.src = iframe.src;
-          console.log('🔄 [DINO] Reloading iframe to update plays display');
-        }
       }
     } catch (err) {
       console.error("❌ [DINO] Error fetching user data:", err);
@@ -105,27 +117,39 @@ function Dino() {
 
       console.log('📥 [DINO] Backend response:', response.data);
 
-      if (response.data.success) {
-        const { reward, totalReward: newTotal, message, milestone, playsRemaining: newPlays, highestMilestone: newMilestone } = response.data;
+        // Check if response has success field OR if it has reward data (indicates success)
+        const isSuccess = response.data.success !== false && (response.data.success === true || response.data.milestone !== undefined || response.data.reward !== undefined);
+      
+        if (isSuccess) {
+        const { reward, totalReward: newTotal, message, milestone, playsRemaining: newPlays, highestMilestone: newMilestone, nextResetTime: newResetTime } = response.data;
         
         // Update state
-        setPlaysRemaining(newPlays);
-        setHighestMilestone(newMilestone);
+          if (newPlays !== undefined) setPlaysRemaining(newPlays);
+          if (newMilestone !== undefined) setHighestMilestone(newMilestone);
+        if (newResetTime) {
+          setNextResetTime(newResetTime);
+        }
         
-        if (reward > 0) {
-          console.log('🎉 [DINO] Reward earned:', reward);
-          // Show modal instead of toast
-          setStatusTitle('Reward earned!');
-          setStatusMessage(`${message}\nMilestone: ${milestone}`);
+          // Check if reward exists and is greater than 0
+          const hasReward = (reward !== undefined && reward > 0) || (milestone !== undefined && milestone >= 100);
+        
+          if (hasReward) {
+            console.log('🎉 [DINO] Reward earned:', reward || milestone);
+          // Play celebration sound for milestone
+          playMilestoneSound();
+          // Show score saved modal first, then game over modal
+          setStatusTitle('🎉 Score Saved!');
+            const rewardAmount = milestone || reward || 0;
+            setStatusMessage(`You earned ${rewardAmount} IMDINO!\n${message || 'Great job!'}\nPlays left today: ${newPlays !== undefined ? newPlays : playsRemaining}`);
           setStatusOpen(true);
-          setTotalReward(newTotal);
+            if (newTotal !== undefined) setTotalReward(newTotal);
           setShowCoins(true);
           setTimeout(() => setShowCoins(false), 1200);
         } else {
           console.log('📊 [DINO] No reward (score < 100)');
-          // Show modal instead of toast
+          // Show score saved modal first, then game over modal
           setStatusTitle('Score saved');
-          setStatusMessage(`${message}\nPlays left today: ${newPlays}`);
+            setStatusMessage(`${message || 'Score saved successfully!'}\nPlays left today: ${newPlays !== undefined ? newPlays : playsRemaining}`);
           setStatusOpen(true);
         }
       } else {
@@ -135,6 +159,11 @@ function Dino() {
         // Update plays remaining even on error (for daily limit)
         if (response.data.playsRemaining !== undefined) {
           setPlaysRemaining(response.data.playsRemaining);
+        }
+        
+        // Show game over modal even on error
+        if (dinoGameRef.current) {
+          dinoGameRef.current.showGameOver();
         }
       }
     } catch (error) {
@@ -153,56 +182,38 @@ function Dino() {
         setStatusOpen(true);
         setPlaysRemaining(0);
       } else {
-        setStatusTitle('Error');
-        setStatusMessage('Failed to save score. Please try again.');
-        setStatusOpen(true);
+        // Graceful fallback: compute local milestone and show success-style message
+        const localMilestone = Math.floor(score / 100) * 100;
+        if (localMilestone >= 100) {
+          setStatusTitle('🎉 Score Saved!');
+          setStatusMessage(`You earned ${localMilestone} IMDINO!\nYour score will sync shortly.`);
+          setStatusOpen(true);
+        } else {
+          setStatusTitle('Score saved');
+          setStatusMessage('Score saved locally. Reach 100+ to earn rewards!');
+          setStatusOpen(true);
+        }
+      }
+      
+      // Show game over modal after info modal
+      if (dinoGameRef.current) {
+        dinoGameRef.current.showGameOver();
       }
     }
   };
 
-  // Expose handleGameOver to the iframe
-  useEffect(() => {
-    console.log('🔧 [DINO] Exposing handleDinoGameOver to window');
-    console.log('🔧 [DINO] Current user:', user);
-    window.handleDinoGameOver = handleGameOver;
-    console.log('✅ [DINO] window.handleDinoGameOver is now:', typeof window.handleDinoGameOver);
-    
-    return () => {
-      console.log('🧹 [DINO] Cleaning up handleDinoGameOver');
-      delete window.handleDinoGameOver;
-    };
-  }, [user]);
-
-  // Expose playsRemaining to the iframe
-  useEffect(() => {
-    window.dinoPlaysRemaining = playsRemaining;
-    window.toast = toast; // Expose toast for iframe to use
-    console.log('🎮 [DINO] Updated playsRemaining:', playsRemaining);
-  }, [playsRemaining]);
-
-  // Listen for timer reset message from iframe
-  useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data && event.data.type === 'DINO_TIMER_RESET') {
-        console.log('⏰ [DINO] Received timer reset message from iframe');
-        // Refresh user data to get updated plays
-        if (user) {
-          toast.loading('Timer ended! Refreshing...', { id: 'auto-refresh' });
-          fetchUserData(user.id.toString()).then(() => {
-            toast.success('7 plays restored!', { id: 'auto-refresh' });
-          });
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [user]);
+  const handleStatusModalClose = () => {
+    setStatusOpen(false);
+    // After closing the score saved modal, show the game over modal
+    if (dinoGameRef.current) {
+      dinoGameRef.current.showGameOver();
+    }
+  };
 
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 flex flex-col overflow-hidden">
+    <div className="w-full h-screen bg-[#0a0b0d] flex flex-col overflow-hidden">
       {/* Animated Background Pattern */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, #82ad4b 0.5px, transparent 0.5px), radial-gradient(circle at 80% 80%, #82ad4b 0.5px, transparent 0.5px)',
           backgroundSize: '50px 50px'
@@ -211,7 +222,7 @@ function Dino() {
 
       {/* Stats Header */}
       {user && (
-        <div className="relative z-10 px-4 py-4 bg-gradient-to-b from-black/95 via-black/80 to-transparent backdrop-blur-sm border-b border-[#82ad4b]/20">
+        <div className="relative z-10 px-4 py-3 bg-[#0a0b0d]/98 backdrop-blur-sm border-b border-[#82ad4b]/20 flex-shrink-0">
           {/* Player Info & Total Earned */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -241,7 +252,7 @@ function Dino() {
               <div className="text-[9px] text-blue-300 mb-0 font-medium">Plays Left</div>
               <div className="font-extrabold text-white text-sm flex items-center justify-center gap-1">
                 <img src={PlaysLeftIcon} alt="Plays Left" className="w-3.5 h-3.5" />
-                <span className={playsRemaining === 0 ? 'text-red-400' : 'text-white'}>{playsRemaining}</span>
+                <span className={playsRemaining === 0 ? 'text-red-400' : 'text-white'}>{playsRemaining ?? '...'}</span>
                 <span className="text-[10px] text-gray-400">/7</span>
               </div>
             </div>
@@ -265,12 +276,30 @@ function Dino() {
 
       {showCoins && <CoinBurst count={18} />}
 
-      <iframe
-        title="Dino Game"
-        src="/dino.html"
-        className="flex-1 w-full border-0"
-        sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups"
-      ></iframe>
+      {/* Dino Game Component - no more iframe! */}
+      <div className="flex-1 w-full relative min-h-0 flex items-start justify-center pt-28">
+        {user && isDataLoaded ? (
+          <DinoGame 
+            ref={dinoGameRef}
+            playsRemaining={playsRemaining}
+            nextResetTime={nextResetTime}
+            onGameOver={handleGameOver}
+            onRestart={() => {
+              // Refresh data when restarting
+              if (user) {
+                fetchUserData(user.id.toString());
+              }
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center p-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#82ad4b] mx-auto mb-4"></div>
+              <div className="text-white text-lg">Loading game...</div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Floating buttons */}
       <div className="fixed left-4 bottom-28 z-[60] flex flex-col gap-3">
@@ -286,9 +315,6 @@ function Dino() {
                 });
                 await fetchUserData(user.id.toString());
                 toast.success('Reset to 7/7 plays!', { id: 'force-reset' });
-                // Reload iframe
-                const iframe = document.querySelector('iframe');
-                if (iframe) iframe.src = iframe.src;
               } catch (err) {
                 toast.error('Reset failed', { id: 'force-reset' });
               }
@@ -351,7 +377,7 @@ function Dino() {
       <GameInfoModal open={open} onClose={() => setOpen(false)} />
       <StatusModal
         open={statusOpen}
-        onClose={() => setStatusOpen(false)}
+        onClose={handleStatusModalClose}
         title={statusTitle}
         message={statusMessage}
       />

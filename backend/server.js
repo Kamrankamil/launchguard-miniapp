@@ -13,10 +13,11 @@ app.use(cors({
     
     const allowedOrigins = [
       "http://localhost:5173",
-      "https://manage.iamdino.org",
+      "https://isochronous-packable-sherly.ngrok-free.dev",
       "https://pussly-retreatal-veda.ngrok-free.dev",
-      "https://manage.iamdino.org",
+      "https://isochronous-packable-sherly.ngrok-free.dev",
       "https://iamdino.org",
+      "https://kora-brotherless-unofficiously.ngrok-free.dev",
     ];
     
     // Allow all trycloudflare.com subdomains
@@ -267,6 +268,9 @@ app.get('/api/referral-stats/:identifier', async (req, res) => {
         console.log('💾 Plays reset saved to database');
       }
 
+    // Calculate next reset time (24 hours from lastPlayDate)
+    const nextResetTime = wallet.dinoGames.lastPlayDate + twentyFourHours;
+
     res.json({
       success: true,
       totalReward: wallet.totalReward,
@@ -280,6 +284,7 @@ app.get('/api/referral-stats/:identifier', async (req, res) => {
       walletAddress: wallet.walletAddress,
       playsRemaining: 7 - wallet.dinoGames.playsToday,
       highestMilestone: wallet.dinoGames.highestMilestone,
+      nextResetTime: nextResetTime, // Add reset timestamp
       tasks: wallet.tasks || []  // ✅ Include tasks array
     });
   } catch (err) {
@@ -731,6 +736,9 @@ app.post("/api/dino-score", async (req, res) => {
       // Save wallet with updated data
       await wallet.save();
 
+      // Calculate next reset time (24 hours from lastPlayDate)
+      const nextResetTime = wallet.dinoGames.lastPlayDate + twentyFourHours;
+
       if (currentMilestone >= 100) {
         const message = isNewMilestone 
           ? `🎉 NEW MILESTONE ${currentMilestone}! You earned ${currentMilestone} IMDINO + 50 BONUS = ${reward} IMDINO!`
@@ -747,7 +755,8 @@ app.post("/api/dino-score", async (req, res) => {
           totalReward: wallet.totalReward,
           playsToday: wallet.dinoGames.playsToday,
           playsRemaining: 7 - wallet.dinoGames.playsToday,
-          highestMilestone: wallet.dinoGames.highestMilestone
+          highestMilestone: wallet.dinoGames.highestMilestone,
+          nextResetTime: nextResetTime
         });
       } else {
         return res.json({
@@ -759,7 +768,8 @@ app.post("/api/dino-score", async (req, res) => {
           totalReward: wallet.totalReward,
           playsToday: wallet.dinoGames.playsToday,
           playsRemaining: 7 - wallet.dinoGames.playsToday,
-          highestMilestone: wallet.dinoGames.highestMilestone
+          highestMilestone: wallet.dinoGames.highestMilestone,
+          nextResetTime: nextResetTime
         });
       }
     } catch (err) {

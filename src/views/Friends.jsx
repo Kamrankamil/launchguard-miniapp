@@ -5,8 +5,8 @@ import { Gift, Copy } from "lucide-react";
 import InviteModal from "../components/global/InviteModal";
 import toast from "react-hot-toast";
 
-const API_BASE = "https://manage.iamdino.org";
-const NGROK_BASE = "https://manage.iamdino.org";
+const API_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
+const NGROK_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
 
 function Friends() {
   const [open, setOpen] = useState(false);

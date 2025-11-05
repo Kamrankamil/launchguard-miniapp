@@ -5,7 +5,7 @@ import buycexlogo from '../assets/img/BUYCEX-INFINITY.png';
 import Dino from '../../public/dino-2.gif';
 
 const BACKEND_URL =
-  import.meta.env.x || 'https://manage.iamdino.org';
+  import.meta.env.x || 'https://isochronous-packable-sherly.ngrok-free.dev';
 
 interface TelegramUser {
   id: number;

@@ -32,7 +32,7 @@ const API_BASE = "https://YOUR-NEW-BACKEND-NGROK-URL.ngrok-free.dev";
 
 ## 📋 Current URLs (Update These!)
 
-**Backend Ngrok**: `https://manage.iamdino.org`
+**Backend Ngrok**: `https://isochronous-packable-sherly.ngrok-free.dev`
 **Frontend Ngrok**: `https://pussly-retreatal-veda.ngrok-free.dev`
 
 These change every time you restart ngrok!

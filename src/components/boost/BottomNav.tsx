@@ -6,21 +6,10 @@ import { Home, Users, Trophy } from "lucide-react";
 import { GiDinosaurRex } from "react-icons/gi";
 import { useEffect, useState } from "react";
 import { FaWallet } from "react-icons/fa";
-
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        onEvent?: (event: string, callback: (data?: any) => void) => void;
-        offEvent?: (event: string, callback?: (data?: any) => void) => void;
-        viewportHeight?: number;
-        viewportStableHeight?: number;
-        ready?: () => void;
-        expand?: () => void;
-      };
-    };
-  }
-}
+// NOTE: Global types for window.Telegram are declared centrally in
+//  - src/utils/telegram.ts (TelegramWebApp)
+//  - src/types/global.d.ts (ambient shim used by TS)
+// Avoid redeclaring here to prevent TS2717 duplicate declaration errors.
 
 export default function BottomNav() {
   const navigate = useNavigate();
@@ -99,7 +88,7 @@ export default function BottomNav() {
         }}
         transition={{ type: "spring", stiffness: 120, damping: 15 }}
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-2 z-40 mx-auto w-[94%] max-w-sm overflow-hidden rounded-3xl border border-gray-800/70 bg-gradient-to-br from-[#0B0C0E]/90 via-[#111214]/95 to-[#0E0F11]/90 px-5 py-3 backdrop-blur-xl"
+        className="fixed inset-x-0 bottom-2 z-50 mx-auto w-[94%] max-w-sm overflow-hidden rounded-3xl border border-gray-800/70 bg-gradient-to-br from-[#0B0C0E]/90 via-[#111214]/95 to-[#0E0F11]/90 px-5 py-3 backdrop-blur-xl"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 via-transparent to-violet-700/10 pointer-events-none" />
 
