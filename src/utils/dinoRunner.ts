@@ -36,8 +36,8 @@ const DEFAULT_CONFIG: RunnerConfig = {
   CLOUD_FREQUENCY: 0.35,
   GAMEOVER_CLEAR_TIME: 750,
   GAP_COEFFICIENT: 0.7,
-  GRAVITY: 0.58, // Slightly lower gravity for longer airtime
-  INITIAL_JUMP_VELOCITY: 13, // Higher jump so early cacti are passable
+  GRAVITY: 0.55, // Lower gravity for more airtime to clear obstacles
+  INITIAL_JUMP_VELOCITY: 15, // Higher jump to easily clear cacti
   MAX_CLOUDS: 6,
   MAX_OBSTACLE_LENGTH: 3,
   MAX_SPEED: 7, // Reduced max speed for better playability
@@ -268,7 +268,7 @@ export class DinoRunner {
     {
       type: 'CACTUS_SMALL',
       width: 12,   // Increased for better visibility
-      height: 28,  // Reduced from 35 for shorter obstacles
+      height: 32,  // Increased height
       yPos: 0, // Will be calculated
       multipleSpeed: 3,
   minGap: 170,
@@ -276,7 +276,7 @@ export class DinoRunner {
     {
       type: 'CACTUS_LARGE',
       width: 16,   // Increased for better visibility
-      height: 38,  // Reduced from 48 for shorter obstacles
+      height: 42,  // Increased height
       yPos: 0, // Will be calculated
       multipleSpeed: 6,
   minGap: 170,
@@ -304,7 +304,8 @@ export class DinoRunner {
     const navHeight = navEl?.offsetHeight ?? 80;
     
     // Get actual header height (stats section at top)
-    const headerEl = document.querySelector('.relative.z-10.px-4.py-3') as HTMLElement | null;
+  // Use a robust selector that doesn't depend on exact Tailwind classes
+  const headerEl = document.querySelector('[data-header="dino-stats"]') as HTMLElement | null;
     const headerHeight = headerEl?.offsetHeight ?? 0;
     
     // Calculate available height - position play area much higher with more top space
@@ -315,8 +316,8 @@ export class DinoRunner {
     // Move play area a little down (lower from top) for all screens
     const topGap = headerHeight + 140;
     const availableHeight = viewportHeight - topGap - bottomGap;
-    // Increase minimum heights to ensure full jump is visible across sizes
-    const minHeight = screenHeight > 700 ? 130 : screenHeight > 600 ? 110 : 90;
+    // Reduced minimum heights for shorter play area
+    const minHeight = screenHeight > 700 ? 100 : screenHeight > 600 ? 85 : 70;
     const finalHeight = Math.max(minHeight, availableHeight);
 
     this.dimensions = {
@@ -1221,7 +1222,7 @@ export class DinoRunner {
     this.ctx.shadowColor = 'rgba(139, 195, 74, 1)';
     this.ctx.shadowBlur = 12;
     this.ctx.strokeStyle = '#8BC34A'; // Brighter line
-    this.ctx.lineWidth = 4; // Thicker line restored
+    this.ctx.lineWidth = 1; // Ultra-thin line
     this.ctx.beginPath();
     this.ctx.moveTo(0, groundY);
     this.ctx.lineTo(this.dimensions.WIDTH, groundY);
@@ -1230,31 +1231,26 @@ export class DinoRunner {
     // Draw secondary highlight line above for depth
     this.ctx.shadowBlur = 6;
     this.ctx.strokeStyle = '#9CCC65';
-    this.ctx.lineWidth = 2; // Thicker highlight restored
+    this.ctx.lineWidth = 0.5; // Ultra-thin highlight
     this.ctx.beginPath();
     this.ctx.moveTo(0, groundY - 1);
     this.ctx.lineTo(this.dimensions.WIDTH, groundY - 1);
     this.ctx.stroke();
     this.ctx.restore();
     
-    // Draw grass blades pattern for detail
-    this.ctx.strokeStyle = 'rgba(124, 179, 66, 0.5)';
-    this.ctx.lineWidth = 2;
-    for (let i = 0; i < this.dimensions.WIDTH; i += 20) {
-      // Small grass blades
+    // Draw grass blades pattern (reduced density and height for cleaner look)
+    this.ctx.strokeStyle = 'rgba(124, 179, 66, 0.3)';
+    this.ctx.lineWidth = 1;
+    for (let i = 0; i < this.dimensions.WIDTH; i += 32) {
+      // Extra-small grass blades
       this.ctx.beginPath();
-      this.ctx.moveTo(i + 5, groundY);
-      this.ctx.lineTo(i + 3, groundY - 4);
+      this.ctx.moveTo(i + 6, groundY);
+      this.ctx.lineTo(i + 4, groundY - 2);
       this.ctx.stroke();
-      
+
       this.ctx.beginPath();
-      this.ctx.moveTo(i + 10, groundY);
-      this.ctx.lineTo(i + 12, groundY - 3);
-      this.ctx.stroke();
-      
-      this.ctx.beginPath();
-      this.ctx.moveTo(i + 15, groundY);
-      this.ctx.lineTo(i + 14, groundY - 5);
+      this.ctx.moveTo(i + 16, groundY);
+      this.ctx.lineTo(i + 17, groundY - 2);
       this.ctx.stroke();
     }
   }

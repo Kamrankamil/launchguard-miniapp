@@ -222,51 +222,51 @@ function Dino() {
 
       {/* Stats Header */}
       {user && (
-        <div className="relative z-10 px-4 py-3 bg-[#0a0b0d]/98 backdrop-blur-sm border-b border-[#82ad4b]/20 flex-shrink-0">
+        <div data-header="dino-stats" className="relative z-10 px-4 py-2 bg-[#0a0b0d]/98 backdrop-blur-sm border-b border-[#82ad4b]/20 flex-shrink-0">
           {/* Player Info & Total Earned */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#82ad4b] to-[#6a8f3d] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-[#82ad4b]/30">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#82ad4b] to-[#6a8f3d] flex items-center justify-center text-white font-bold text-base shadow-lg shadow-[#82ad4b]/30">
                 {user.first_name?.charAt(0)?.toUpperCase() || 'P'}
               </div>
               <div>
-                <div className="text-xs text-gray-400 mb-0.5">Player</div>
-                <div className="text-base font-bold text-white tracking-wide">
+                <div className="text-[10px] text-gray-400 mb-0.5">Player</div>
+                <div className="text-sm font-semibold text-white tracking-wide">
                   {user.first_name}
                 </div>
               </div>
             </div>
-            <div className="text-right bg-gradient-to-br from-[#82ad4b]/20 to-[#82ad4b]/5 px-4 py-2 rounded-lg border border-[#82ad4b]/30">
-              <div className="text-xs text-gray-400 mb-0.5">Total Earned</div>
-              <div className="text-lg font-extrabold text-[#82ad4b] drop-shadow-lg flex items-center justify-end gap-1">
-                <img src={CoinIcon} alt="Coin" className="w-7 h-7" />
+            <div className="text-right bg-gradient-to-br from-[#82ad4b]/20 to-[#82ad4b]/5 px-3 py-1.5 rounded-lg border border-[#82ad4b]/30">
+              <div className="text-[10px] text-gray-400 mb-0.5">Total Earned</div>
+              <div className="text-base font-extrabold text-[#82ad4b] drop-shadow-lg flex items-center justify-end gap-1">
+                <img src={CoinIcon} alt="Coin" className="w-6 h-6" />
                 {totalReward.toFixed(2)} 
-                <span className="text-xs font-normal text-[#82ad4b]/80">IMDINO</span>
+                <span className="text-[10px] font-normal text-[#82ad4b]/80">IMDINO</span>
               </div>
             </div>
           </div>
           
           {/* Progress Bar and Stats */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-sm rounded-lg px-2 py-1 border border-blue-400/30 shadow-lg hover:scale-105 transition-transform">
+          <div className="grid grid-cols-3 gap-2 mb-1.5">
+            <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 backdrop-blur-sm rounded-lg px-2 py-0.5 border border-blue-400/30 shadow-lg">
               <div className="text-[9px] text-blue-300 mb-0 font-medium">Plays Left</div>
-              <div className="font-extrabold text-white text-sm flex items-center justify-center gap-1">
-                <img src={PlaysLeftIcon} alt="Plays Left" className="w-3.5 h-3.5" />
+              <div className="font-extrabold text-white text-xs flex items-center justify-center gap-1">
+                <img src={PlaysLeftIcon} alt="Plays Left" className="w-3 h-3" />
                 <span className={playsRemaining === 0 ? 'text-red-400' : 'text-white'}>{playsRemaining ?? '...'}</span>
-                <span className="text-[10px] text-gray-400">/7</span>
+                <span className="text-[9px] text-gray-400">/7</span>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#82ad4b]/20 to-[#82ad4b]/10 backdrop-blur-sm rounded-lg px-2 py-1 border border-[#82ad4b]/40 shadow-lg hover:scale-105 transition-transform">
+            <div className="bg-gradient-to-br from-[#82ad4b]/20 to-[#82ad4b]/10 backdrop-blur-sm rounded-lg px-2 py-0.5 border border-[#82ad4b]/40 shadow-lg">
               <div className="text-[9px] text-[#a8d966] mb-0 font-medium">Best Milestone</div>
-              <div className="font-extrabold text-[#82ad4b] text-sm flex items-center justify-center gap-1">
-                <img src={MilestoneIcon} alt="Milestone" className="w-3.5 h-3.5" />
+              <div className="font-extrabold text-[#82ad4b] text-xs flex items-center justify-center gap-1">
+                <img src={MilestoneIcon} alt="Milestone" className="w-3 h-3" />
                 {highestMilestone}
               </div>
             </div>
-            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-sm rounded-lg px-2 py-1 border border-yellow-400/30 shadow-lg hover:scale-105 transition-transform">
+            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-sm rounded-lg px-2 py-0.5 border border-yellow-400/30 shadow-lg">
               <div className="text-[9px] text-yellow-300 mb-0 font-medium">Next Goal</div>
-              <div className="font-extrabold text-yellow-400 text-sm flex items-center justify-center gap-1">
-                <img src={NextGoalIcon} alt="Next Goal" className="w-3.5 h-3.5" />
+              <div className="font-extrabold text-yellow-400 text-xs flex items-center justify-center gap-1">
+                <img src={NextGoalIcon} alt="Next Goal" className="w-3 h-3" />
                 {highestMilestone + 100}
               </div>
             </div>
