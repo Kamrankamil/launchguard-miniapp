@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import slider1 from '../../assets/img/home/slider-1.webp'
-import DinoVideo from "../../../public/dino-video.mp4"
+import DinoVideo from "/dino-video.mp4?url"
 import { Link } from "react-router-dom"
 
 export function Hero() {

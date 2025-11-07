@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import buycexlogo from '../assets/img/BUYCEX-INFINITY.png';
-import Dino from '../../public/dino-2.gif';
+import Dino from '/dino-2.gif?url';
 
 const BACKEND_URL =
   import.meta.env.x || 'https://isochronous-packable-sherly.ngrok-free.dev';

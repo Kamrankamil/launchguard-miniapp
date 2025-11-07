@@ -36,14 +36,14 @@ const DEFAULT_CONFIG: RunnerConfig = {
   CLOUD_FREQUENCY: 0.35,
   GAMEOVER_CLEAR_TIME: 750,
   GAP_COEFFICIENT: 0.7,
-  GRAVITY: 0.58, // Smooth gravity for easier gameplay
-  INITIAL_JUMP_VELOCITY: 15, // Higher jump for easy obstacle clearing
+  GRAVITY: 0.62, // Reduced gravity for smoother, higher jump
+  INITIAL_JUMP_VELOCITY: 15, // Higher jump for easy obstacle clearance
   MAX_CLOUDS: 6,
   MAX_OBSTACLE_LENGTH: 3,
-  MAX_SPEED: 6, // Slower max speed for smoother gameplay
-  MIN_JUMP_HEIGHT: 32, // Higher minimum jump
+  MAX_SPEED: 5.5, // Even slower max speed for easier gameplay
+  MIN_JUMP_HEIGHT: 35, // Higher minimum jump
   MOBILE_SPEED_COEFFICIENT: IS_ANDROID ? 0.7 : (IS_IOS ? 0.7 : 0.8), // Slightly faster for better gameplay
-  SPEED: 2.5, // Reduced starting speed for gentler start
+  SPEED: 4.0, // Increased starting speed for faster-paced start
   SPEED_DROP_COEFFICIENT: 3,
   STARTUP_RAMP_MS: 1500, // Extended ramp time for smoother acceleration
 };
@@ -249,6 +249,7 @@ export class DinoRunner {
   private jumpSound: HTMLAudioElement;
   private scoreSound: HTMLAudioElement;
   private gameOverSound: HTMLAudioElement;
+  private hitSound: HTMLAudioElement;
   
   // Startup ramp to normalize initial speed across devices (esp. Android Telegram)
   private startupElapsed: number = 0;
@@ -267,19 +268,19 @@ export class DinoRunner {
   private obstacleTypes = [
     {
       type: 'CACTUS_SMALL',
-      width: 12,   // Increased for better visibility
-      height: 30,  // Increased height for better visibility
+      width: 18,   // Increased for better visibility
+      height: 35,  // Taller obstacles
       yPos: 0, // Will be calculated
       multipleSpeed: 3,
-  minGap: 180,  // Increased gap for easier gameplay
+  minGap: 220,  // Much larger gap for easier gameplay
     },
     {
       type: 'CACTUS_LARGE',
-      width: 16,   // Increased for better visibility
-      height: 38,  // Increased height for better visibility
+      width: 24,   // Increased for better visibility
+      height: 45,  // Taller obstacles
       yPos: 0, // Will be calculated
       multipleSpeed: 6,
-  minGap: 180,  // Increased gap for easier gameplay
+  minGap: 220,  // Much larger gap for easier gameplay
     }
   ];
 
@@ -350,10 +351,11 @@ export class DinoRunner {
     this.started = false;
     this.raqId = 0;
     
-    // Initialize Web Audio API for sound effects
-    this.jumpSound = this.createBeepSound(600, 0.1, 0.3); // High pitched, short
-    this.scoreSound = this.createBeepSound(800, 0.15, 0.4); // Pleasant tone
-    this.gameOverSound = this.createBeepSound(200, 0.3, 0.5); // Low, longer
+    // Initialize Web Audio API for sound effects (game-like distinctive sounds)
+    this.jumpSound = this.createBeepSound(800, 0.08, 1.8); // Sharp high jump sound
+    this.scoreSound = this.createBeepSound(1200, 0.12, 1.8); // Bright achievement sound
+    this.gameOverSound = this.createBeepSound(180, 0.4, 1.8); // Deep game over sound
+    this.hitSound = this.createBeepSound(120, 0.35, 2.2); // Very low crash sound, extra loud
     
     // Create T-Rex with jump sound callback
     this.tRex = new Trex(this.canvas, this.dimensions, () => this.playJumpSound());
@@ -521,20 +523,17 @@ export class DinoRunner {
   }
 
   private drawClouds() {
+    // Simple white/light gray clouds for dark background
     for (const cloud of this.clouds) {
       this.ctx.save();
-      this.ctx.fillStyle = `rgba(130, 173, 75, ${cloud.opacity})`;
+      this.ctx.fillStyle = 'rgba(200, 200, 200, 0.3)'; // Semi-transparent light gray
       
-      // Draw cloud as multiple overlapping circles
-      const numPuffs = 3;
-      for (let i = 0; i < numPuffs; i++) {
-        const puffX = cloud.x + (i * cloud.width) / (numPuffs + 1);
-        const puffRadius = cloud.height / 2 + (i === 1 ? 5 : 0);
-        
-        this.ctx.beginPath();
-        this.ctx.arc(puffX, cloud.y, puffRadius, 0, Math.PI * 2);
-        this.ctx.fill();
-      }
+      // Draw simple cloud shape with circles
+      this.ctx.beginPath();
+      this.ctx.arc(cloud.x, cloud.y, 10, 0, Math.PI * 2);
+      this.ctx.arc(cloud.x + 15, cloud.y, 12, 0, Math.PI * 2);
+      this.ctx.arc(cloud.x + 30, cloud.y, 10, 0, Math.PI * 2);
+      this.ctx.fill();
       
       this.ctx.restore();
     }
@@ -793,19 +792,23 @@ export class DinoRunner {
       const audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
       const channelData = audioBuffer.getChannelData(0);
       
-      // Generate sine wave
+      // Generate richer sound wave (like original game)
       for (let i = 0; i < numSamples; i++) {
         const t = i / sampleRate;
-        // Apply fade out to avoid clicks
-        const fadeOut = Math.max(0, 1 - (i / numSamples) * 2);
-        channelData[i] = Math.sin(2 * Math.PI * frequency * t) * fadeOut * volume;
+        // Apply envelope (quick attack, exponential decay)
+        const envelope = Math.exp(-3 * t / duration);
+        // Mix fundamental frequency with harmonics for richer sound
+        const fundamental = Math.sin(2 * Math.PI * frequency * t);
+        const harmonic2 = 0.3 * Math.sin(2 * Math.PI * frequency * 2 * t);
+        const harmonic3 = 0.15 * Math.sin(2 * Math.PI * frequency * 3 * t);
+        channelData[i] = (fundamental + harmonic2 + harmonic3) * envelope * volume;
       }
       
       // Convert to WAV and create blob URL
       const wav = this.audioBufferToWav(audioBuffer);
       const blob = new Blob([wav], { type: 'audio/wav' });
       audio.src = URL.createObjectURL(blob);
-      audio.volume = volume;
+      audio.volume = 1.0; // Maximum volume for all sounds
     } catch (e) {
       // Fallback: use silent audio if Web Audio API fails
       console.warn('Web Audio API not available, sounds disabled');
@@ -894,8 +897,15 @@ export class DinoRunner {
     } catch (e) {}
   }
 
+  private playHitSound() {
+    try {
+      this.hitSound.currentTime = 0;
+      this.hitSound.play().catch(() => {});
+    } catch (e) {}
+  }
+
   private init() {
-    this.ctx.fillStyle = '#0b0c0e';
+    this.ctx.fillStyle = '#0a0b0d';
     this.ctx.fillRect(0, 0, this.dimensions.WIDTH, this.dimensions.HEIGHT);
     
     // Draw initial state
@@ -949,6 +959,8 @@ export class DinoRunner {
       this.started = true;
       this.time = performance.now();
       this.startupElapsed = 0; // reset startup ramp
+      // Play start sound for game beginning feedback
+      this.playJumpSound();
       this.update();
     }
   }
@@ -981,6 +993,8 @@ export class DinoRunner {
     this.initUndergroundElements(); // Reinitialize underground
     this.tRex.reset();
     this.clearCanvas();
+    // Play start sound for restart feedback
+    this.playJumpSound();
     this.update();
   }
 
@@ -998,7 +1012,7 @@ export class DinoRunner {
       
       this.runningTime += deltaTime;
       
-      // Update and draw background particles
+      // Draw background elements
       this.updateParticles();
       this.drawParticles();
       
@@ -1025,11 +1039,6 @@ export class DinoRunner {
       
       // Draw everything
       this.drawGround();
-      
-      // Draw underground animations below ground
-      this.drawUndergroundElements();
-      this.updateUndergroundElements();
-      
       this.tRex.draw();
       this.drawScore();
       
@@ -1096,27 +1105,22 @@ export class DinoRunner {
     const typeIndex = Math.floor(Math.random() * this.obstacleTypes.length);
     const type = this.obstacleTypes[typeIndex];
     const size = Math.min(Math.floor(Math.random() * 3) + 1, 3);
-    
     // Calculate speed progress (0 to 1) from initial speed to max speed
     const speedProgress = Math.min((this.currentSpeed - this.config.SPEED) / (this.config.MAX_SPEED - this.config.SPEED), 1);
-    
-    // Scale obstacle height based on speed
-    // Start at 85% of base height, grow to 100% at max speed
-    const minHeightScale = 0.85;
+    // Start easier: obstacles at 80% height for first 30% of speed, then scale up
+    const minHeightScale = speedProgress < 0.3 ? 0.8 : 0.85;
     const heightScale = minHeightScale + (speedProgress * (1 - minHeightScale));
     const scaledHeight = Math.round(type.height * heightScale);
-    
     const obstacle: Obstacle = {
       xPos: this.dimensions.WIDTH,
-      yPos: this.dimensions.HEIGHT - 12 - scaledHeight, // Recalculate yPos with scaled height
+      yPos: this.dimensions.HEIGHT - 12 - scaledHeight,
       width: type.width * size,
-      height: scaledHeight, // Use scaled height
+      height: scaledHeight,
       size,
       typeConfig: type,
       remove: false,
       gap: this.calculateGap(type, size),
     };
-    
     this.obstacles.push(obstacle);
   }
 
@@ -1134,10 +1138,10 @@ export class DinoRunner {
     const w = obstacle.width;
     const h = obstacle.height;
     
-    // Vibrant cactus colors that stand out
-    const FILL = '#2D8B3C'; // Brighter, more saturated green
-    const STROKE = '#1A5228'; // Dark forest green outline
-    const HIGHLIGHT = '#3FA84F'; // Lighter green for highlights
+    // Super vibrant cactus colors for maximum visibility
+    const FILL = '#4CAF50'; // Bright material design green
+    const STROKE = '#2E7D32'; // Strong dark green outline
+    const HIGHLIGHT = '#66BB6A'; // Bright highlight
     const lineW = Math.max(2, Math.round(this.dimensions.WIDTH / 400));
 
     // Helper to draw a filled rect with outline and highlight
@@ -1198,8 +1202,10 @@ export class DinoRunner {
   private checkCollision(): boolean {
     for (const obstacle of this.obstacles) {
       // Rectangle collision detection for cactus obstacles
-      // Add slight tolerance to make gameplay more forgiving
-      const tolerance = 4;
+      // Ultra forgiving collision - super easy mode
+      const speedProgress = Math.min((this.currentSpeed - this.config.SPEED) / (this.config.MAX_SPEED - this.config.SPEED), 1);
+      // Start with ultra forgiving tolerance (20px), reduce to 15px at max speed
+      const tolerance = speedProgress < 0.3 ? 20 : (speedProgress < 0.6 ? 18 : 15);
       
       if (
         this.tRex.xPos + tolerance < obstacle.xPos + obstacle.width &&
@@ -1214,54 +1220,20 @@ export class DinoRunner {
   }
 
   private drawGround() {
-    // Dynamic ground position based on canvas height (always 12px from bottom)
+    // Bright green ground line for dark background
     const groundY = this.dimensions.HEIGHT - 12;
     
-    // Draw grass-like ground with brighter gradient
-    const groundGradient = this.ctx.createLinearGradient(0, groundY - 10, 0, this.dimensions.HEIGHT);
-    groundGradient.addColorStop(0, '#8BC34A'); // Brighter lime green
-    groundGradient.addColorStop(0.4, '#7CB342'); // Bright green
-    groundGradient.addColorStop(1, '#689F38'); // Medium green
-    
-    this.ctx.fillStyle = groundGradient;
-    this.ctx.fillRect(0, groundY, this.dimensions.WIDTH, this.dimensions.HEIGHT - groundY);
-    
-    // Draw prominent ground line with stronger glow
+    // Draw bright green ground line with glow
     this.ctx.save();
-    this.ctx.shadowColor = 'rgba(139, 195, 74, 1)';
-    this.ctx.shadowBlur = 12;
-    this.ctx.strokeStyle = '#8BC34A'; // Brighter line
-    this.ctx.lineWidth = 1; // Ultra-thin line
+    this.ctx.shadowColor = 'rgba(139, 195, 74, 0.8)';
+    this.ctx.shadowBlur = 8;
+    this.ctx.strokeStyle = '#8BC34A'; // Bright green
+    this.ctx.lineWidth = 2;
     this.ctx.beginPath();
     this.ctx.moveTo(0, groundY);
     this.ctx.lineTo(this.dimensions.WIDTH, groundY);
     this.ctx.stroke();
-    
-    // Draw secondary highlight line above for depth
-    this.ctx.shadowBlur = 6;
-    this.ctx.strokeStyle = '#9CCC65';
-    this.ctx.lineWidth = 0.5; // Ultra-thin highlight
-    this.ctx.beginPath();
-    this.ctx.moveTo(0, groundY - 1);
-    this.ctx.lineTo(this.dimensions.WIDTH, groundY - 1);
-    this.ctx.stroke();
     this.ctx.restore();
-    
-    // Draw grass blades pattern (reduced density and height for cleaner look)
-    this.ctx.strokeStyle = 'rgba(124, 179, 66, 0.3)';
-    this.ctx.lineWidth = 1;
-    for (let i = 0; i < this.dimensions.WIDTH; i += 32) {
-      // Extra-small grass blades
-      this.ctx.beginPath();
-      this.ctx.moveTo(i + 6, groundY);
-      this.ctx.lineTo(i + 4, groundY - 2);
-      this.ctx.stroke();
-
-      this.ctx.beginPath();
-      this.ctx.moveTo(i + 16, groundY);
-      this.ctx.lineTo(i + 17, groundY - 2);
-      this.ctx.stroke();
-    }
   }
 
   private drawScore() {
@@ -1308,7 +1280,7 @@ export class DinoRunner {
   }
 
   private clearCanvas() {
-    // Use dark theme background color (matching the app theme)
+    // Dark theme background (matching the app theme)
     this.ctx.fillStyle = '#0a0b0d';
     this.ctx.fillRect(0, 0, this.dimensions.WIDTH, this.dimensions.HEIGHT);
   }
@@ -1317,8 +1289,8 @@ export class DinoRunner {
     this.crashed = true;
     this.stop();
     
-    // Play game over sound
-    this.playGameOverSound();
+    // Play hit sound when collision happens
+    this.playHitSound();
     
     const finalScore = Math.floor(this.distanceRan * 0.025);
     

@@ -10,7 +10,7 @@ import { TriangleAlert, ShoppingCart, FileText, ChevronRight } from "lucide-reac
 import { motion } from "framer-motion";
 import StoryProgress from "../components/boost/StoryProgress";
 import axios from "axios";
-import Dino from "../../public/dino-2.gif" 
+import Dino from "/dino-2.gif?url" 
 
 // ✅ Your backend base URL
 const BACKEND_URL = "https://isochronous-packable-sherly.ngrok-free.dev";

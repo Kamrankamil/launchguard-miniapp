@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { Menu, X, ExternalLink, Twitter, MessageCircle, Compass, Gem, Zap, Trophy, Star, Target, Lock, Calendar, CheckCircle, Clock } from "lucide-react"
-import Dino from "../../public/dino-2.gif"
-import Dino2 from "../../public/dino-3.gif"
+import Dino from "/dino-2.gif?url"
+import Dino2 from "/dino-3.gif?url"
 import { Link } from "react-router-dom"
-import dinoCoin from "../../src/assets/img/coin-dino.png"
+import dinoCoin from "../assets/img/coin-dino.png"
 import { RiTelegram2Fill, RiTwitterXFill } from "react-icons/ri"
 
 export default function LandingMini() {
