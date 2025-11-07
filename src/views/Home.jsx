@@ -13,7 +13,7 @@ import axios from "axios";
 import Dino from "/dino-2.gif?url" 
 
 // ✅ Your backend base URL
-const BACKEND_URL = "https://isochronous-packable-sherly.ngrok-free.dev";
+const BACKEND_URL = "https://manage.iamdino.org";
 
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");

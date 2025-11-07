@@ -12,8 +12,8 @@ function Leaderboard() {
     const fetchData = async () => {
       try {
         const endpoint = activeTab === 'rewards'
-          ? 'https://isochronous-packable-sherly.ngrok-free.dev/api/leaderboard/rewards'
-          : 'https://isochronous-packable-sherly.ngrok-free.dev/api/leaderboard/holders';
+          ? 'https://manage.iamdino.org/api/leaderboard/rewards'
+          : 'https://manage.iamdino.org/api/leaderboard/holders';
           console.log("Fetching from:", endpoint);
         const res = await axios.get(endpoint);
         const wallets = res.data.wallets || [];

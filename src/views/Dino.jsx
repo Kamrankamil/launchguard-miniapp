@@ -15,9 +15,9 @@ import NextGoalIcon from "../assets/img/stats/NextGoal.png";
 import CoinIcon from "../assets/img/stats/coin.png";
 
 // TODO: Update this URL to match your current ngrok URL
-const API_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
+const API_BASE = "https://manage.iamdino.org";
 // For local testing without ngrok, use:
-// const API_BASE = "https://isochronous-packable-sherly.ngrok-free.dev";
+// const API_BASE = "https://manage.iamdino.org";
 // NOTE: Switch back to ngrok URL when deploying to Telegram
 
 function Dino() {

@@ -13,7 +13,7 @@ export const wagmiConfig = defaultWagmiConfig({
   metadata: {
     name: "Buycex Presale",
     description: "Buycex Token Presale Portal",
-    url: "https://isochronous-packable-sherly.ngrok-free.dev",
+    url: "https://manage.iamdino.org",
     icons: ["https://your-icon-link.png"],
   },
 })
